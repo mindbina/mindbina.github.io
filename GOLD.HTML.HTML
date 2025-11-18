@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تحلیل وابستگی قیمت طلا | Economali</title>
+    <style>
+        :root {
+            --bg-color: #f3f4f6;
+            --card-bg: #ffffff;
+            --text-color: #1f2937;
+            --border-color: #e5e7eb;
+            --gold-primary: #b48ead; /* کمی مدرن‌تر */
+            --gold-accent: #d4af37;
+            --brand-color: #111827;
+            --brand-hover: #374151;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+            color: var(--text-color);
+            box-sizing: border-box;
+        }
+        .container {
+            max-width: 100%; /* استفاده از تمام عرض صفحه */
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 200px 1fr; /* عرض سایدبار به ۲۰۰ پیکسل کاهش یافت */
+            gap: 15px; /* فاصله بین ستون‌ها کمی کمتر شد */
+            align-items: start;
+        }
+        .sidebar {
+            background: var(--card-bg);
+            padding: 15px; /* فضای داخلی سایدبار فشرده‌تر شد */
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 20px;
+            border: 1px solid var(--border-color);
+        }
+        .brand-title {
+            text-align: center;
+            font-size: 1.3rem; /* عنوان برند کوچکتر شد */
+            font-weight: 900;
+            color: var(--brand-color);
+            margin-bottom: 5px;
+            letter-spacing: -0.5px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid var(--gold-accent);
+            margin-bottom: 15px;
+        }
+        .main-content {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            overflow: hidden; 
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+        }
+        .table-wrapper {
+            overflow-x: auto;
+            width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+        h1 {
+            color: var(--brand-color);
+            margin-top: 0;
+            font-size: 1.3rem;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 15px;
+        }
+        h2 {
+            font-size: 1rem; /* عنوان تنظیمات کوچکتر شد */
+            color: #4b5563;
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+        .input-group {
+            margin-bottom: 12px; /* فاصله بین ورودی‌ها کمتر شد */
+        }
+        label {
+            display: block;
+            margin-bottom: 4px;
+            font-weight: 600;
+            font-size: 0.8rem; /* فونت لیبل‌ها ریزتر شد */
+            color: #374151;
+        }
+        input {
+            width: 100%;
+            padding: 8px; /* ارتفاع اینپوت‌ها کمتر شد */
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            background-color: #f9fafb;
+        }
+        input:focus {
+            outline: none;
+            border-color: var(--gold-accent);
+            background-color: #fff;
+            box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+        }
+        button {
+            width: 100%;
+            padding: 10px; /* دکمه جمع‌وجورتر شد */
+            background-color: var(--brand-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.9rem;
+            margin-top: 8px;
+            transition: background-color 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        button:hover {
+            background-color: var(--brand-hover);
+            transform: translateY(-1px);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 0.85rem; /* فونت کوچکتر برای جا شدن بهتر */
+            min-width: auto; /* حذف محدودیت عرض */
+        }
+        th, td {
+            padding: 8px 6px; /* فاصله کمتر سلول‌ها */
+            text-align: center;
+            border-bottom: 1px solid #eee;
+            border-left: 1px solid #eee; 
+        }
+        /* اصلاح بردرها برای RTL */
+        th:last-child, td:last-child {
+             border-left: none;
+        }
+
+        th {
+            background-color: var(--brand-color);
+            color: white;
+            font-weight: 500;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            white-space: nowrap;
+            font-size: 0.8rem;
+        }
+        
+        /* گوشه های هدر جدول */
+        th:first-child { border-top-right-radius: 8px; } 
+        th:last-child { border-top-left-radius: 8px; } 
+
+        .row-header {
+            background-color: var(--gold-accent);
+            color: white;
+            font-weight: bold;
+            position: sticky;
+            right: 0;
+            z-index: 5;
+            border-left: 2px solid rgba(255,255,255,0.2);
+            box-shadow: -2px 0 5px rgba(0,0,0,0.05);
+            white-space: nowrap;
+            font-size: 0.8rem;
+        }
+        
+        .formula-info {
+            font-size: 0.85em;
+            color: #6b7280;
+            margin-top: 25px;
+            padding: 16px;
+            background-color: #f3f4f6;
+            border-radius: 10px;
+            line-height: 1.8;
+            border: 1px dashed #d1d5db;
+        }
+        
+        /* Heatmap Colors - Slightly softer for better readability */
+        .heatmap-low { background-color: #ecfdf5; color: #047857; } 
+        .heatmap-mid-low { background-color: #fefce8; color: #b45309; }
+        .heatmap-mid-high { background-color: #ffedd5; color: #c2410c; }
+        .heatmap-high { background-color: #fef2f2; color: #b91c1c; }
+
+        .result-cell {
+            font-family: 'Courier New', Courier, monospace; 
+            font-weight: 600;
+            transition: all 0.2s;
+            cursor: default;
+            white-space: nowrap; /* جلوگیری از شکستن خط اعداد */
+        }
+        .result-cell:hover {
+            transform: scale(1.1);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            z-index: 2;
+            position: relative;
+            border-radius: 4px;
+        }
+
+        .footer-brand {
+            text-align: center;
+            margin-top: auto;
+            padding-top: 15px;
+            font-size: 0.75rem;
+            color: #9ca3af;
+        }
+
+        @media (max-width: 900px) {
+            .container { 
+                grid-template-columns: 1fr; 
+                gap: 20px;
+            }
+            .sidebar { 
+                position: static; 
+                margin-bottom: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="sidebar">
+        <div class="brand-title">Economali</div>
+        <h2>⚙️ تنظیمات تحلیل</h2>
+        
+        <div class="input-group">
+            <label>💰 قیمت پایه انس جهانی ($):</label>
+            <input type="number" id="baseOunce" value="4000">
+        </div>
+        <div class="input-group">
+            <label>📊 گام نوسان انس ($):</label>
+            <input type="number" id="stepOunce" value="50">
+        </div>
+
+        <hr style="border-color: #eee; margin: 20px 0;">
+
+        <div class="input-group">
+            <label>💵 قیمت پایه دلار (تومان):</label>
+            <input type="number" id="baseDollar" value="100000">
+        </div>
+        <div class="input-group">
+            <label>📈 گام نوسان دلار (تومان):</label>
+            <input type="number" id="stepDollar" value="3000">
+        </div>
+
+        <button onclick="generateTable()">🔄 محاسبه مجدد</button>
+
+        <div class="formula-info">
+            <strong>🧮 فرمول محاسباتی Economali:</strong><br>
+            قیمت ۱ گرم ۱۸ عیار (۷۵۰) بر اساس انس ۹۹.۹۹:<br>
+            <code dir="ltr" style="display:block; margin-top:5px; text-align:center;">(Ounce × USD ÷ 31.1035) × (750 ÷ 999.9)</code>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <h1>تحلیل وابستگی قیمت طلا (میلیون تومان)</h1>
+        <div class="table-wrapper">
+            <div id="tableContainer"></div>
+        </div>
+        <div class="footer-brand">Powered by Economali Analysis Tools © 2025</div>
+    </div>
+</div>
+
+<script>
+    // ثابت‌های تبدیل
+    const OUNCE_TO_GRAM = 31.1034768;
+    const KARAT_FACTOR = 750 / 999.9; 
+
+    function formatNumber(num) {
+        // رند کردن به نزدیکترین عدد صحیح و اضافه کردن جداکننده هزارگان
+        return Math.round(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+    
+    function formatMillion(num) {
+        // نمایش به صورت میلیون با ۳ رقم اعشار
+        return (num / 1000000).toFixed(3);
+    }
+
+    function calculateGoldPrice(ounce, dollar) {
+        // قیمت یک گرم طلای ۲۴ عیار (با فرض خلوص 999.9 برای انس)
+        let gram24k = (ounce * dollar) / OUNCE_TO_GRAM;
+        // تبدیل به طلای ۱۸ عیار (۷۵۰)
+        let gram18k = gram24k * KARAT_FACTOR;
+        return gram18k;
+    }
+
+    function getColorClass(value, min, max) {
+        const range = max - min;
+        const percent = (value - min) / range;
+
+        if (percent < 0.25) return 'heatmap-low';
+        if (percent < 0.5) return 'heatmap-mid-low';
+        if (percent < 0.75) return 'heatmap-mid-high';
+        return 'heatmap-high';
+    }
+
+    function generateTable() {
+        const baseOunce = parseFloat(document.getElementById('baseOunce').value);
+        const stepOunce = parseFloat(document.getElementById('stepOunce').value);
+        const baseDollar = parseFloat(document.getElementById('baseDollar').value);
+        const stepDollar = parseFloat(document.getElementById('stepDollar').value);
+
+        if (isNaN(baseOunce) || isNaN(stepOunce) || isNaN(baseDollar) || isNaN(stepDollar)) {
+            alert("لطفا تمام مقادیر را به درستی وارد کنید.");
+            return;
+        }
+
+        // ساخت آرایه‌های محورها
+        let ounces = [];
+        let dollars = [];
+        
+        // افزایش تعداد ردیف‌ها به 15 (از -7 تا +7)
+        for(let i = -7; i <= 7; i++) {
+            ounces.push(baseOunce + (i * stepOunce));
+            dollars.push(baseDollar + (i * stepDollar));
+        }
+
+        // یافتن مینیمم و ماکزیمم برای هیت‌مپ (Heatmap)
+        let minPrice = calculateGoldPrice(ounces[0], dollars[0]);
+        let maxPrice = calculateGoldPrice(ounces[ounces.length-1], dollars[dollars.length-1]);
+
+        let html = '<table><thead><tr><th>انس 👇 / دلار 👈</th>';
+        
+        // هدر ستون‌ها (دلار)
+        dollars.forEach(d => {
+            html += `<th>${formatNumber(d)}</th>`;
+        });
+        html += '</tr></thead><tbody>';
+
+        // ردیف‌ها (انس)
+        ounces.forEach(o => {
+            html += `<tr><td class="row-header">${o} $</td>`;
+            dollars.forEach(d => {
+                let price = calculateGoldPrice(o, d);
+                let colorClass = getColorClass(price, minPrice, maxPrice);
+                // نمایش به صورت میلیون تومان
+                let displayPrice = formatMillion(price);
+                
+                html += `<td class="result-cell ${colorClass}" title="انس: ${o}$ | دلار: ${formatNumber(d)} تومان | قیمت دقیق: ${formatNumber(price)}">${displayPrice}</td>`;
+            });
+            html += '</tr>';
+        });
+
+        html += '</tbody></table>';
+        document.getElementById('tableContainer').innerHTML = html;
+    }
+
+    // اجرای اولیه هنگام لود صفحه
+    window.onload = generateTable;
+</script>
+
+</body>
+</html>
